@@ -475,7 +475,7 @@ function init_include()
 		
 		gearswap.refresh_globals(false)
 		
-		if (player ~= nil) and (player.status == 'Idle' or player.status == 'Engaged') and not (check_midaction() or moving or buffactive['Sneak'] or buffactive['Invisible'] or silent_check_disable()) then
+		if (player ~= nil) and (player.status == 'Idle' or player.status == 'Engaged') and not (delayed_cast ~= '' or check_midaction() or moving or buffactive['Sneak'] or buffactive['Invisible'] or silent_check_disable()) then
 			if pre_tick then
 				if pre_tick() then return end
 			end
@@ -837,7 +837,8 @@ function precast(spell)
 end
 
 function midcast(spell)
-    handle_actions(spell, 'midcast')
+	if spell.type == 'WeaponSkill' or spell.type == 'JobAbility' then return end
+	handle_actions(spell, 'midcast')
 end
 
 function aftercast(spell)
@@ -1025,7 +1026,7 @@ function default_post_precast(spell, spellMap, eventArgs)
 				equip(sets.Capacity)
 			end
 			
-			if state.TreasureMode.value ~= 'None' and not info.tagged_mobs[spell.target.id] then
+			if state.TreasureMode.value ~= 'None' and not info.tagged_mobs[spell.target.id] and not TH_WS_exceptions:contains(spell.target.name) then
 				equip(sets.TreasureHunter)
 			end
 			
@@ -1150,7 +1151,7 @@ function default_post_midcast(spell, spellMap, eventArgs)
 end
 
 function default_post_pet_midcast(spell, spellMap, eventArgs)
-	if state.Capacity.value == true then
+	if state.Capacity.value then
 		equip(sets.Capacity)
 	end
 
@@ -1237,9 +1238,11 @@ function default_aftercast(spell, spellMap, eventArgs)
 end
 
 function default_pet_midcast(spell, spellMap, eventArgs)
+	--[[Handling this in aftercast now, commenting out to prevent duplication.
 	if not (type(spell.type) == 'string' and (spell.type:startswith('BloodPact') or spell.type == 'Monster')) then
 		equip(get_pet_midcast_set(spell, spellMap))
 	end
+	]]
 end
 
 function default_pet_aftercast(spell, spellMap, eventArgs)
@@ -1346,20 +1349,20 @@ function cleanup_pet_aftercast(spell, spellMap, eventArgs)
 end
 
 function pre_tick()
+	if check_doomed() then return true end
 	if check_trust() then return true end
 	if check_rune() then return true end
+	if check_shadows() then return true end
+	if check_use_item() then return true end
 	return false
 end
 
 function default_tick()
 	check_lockstyle()
-	if check_doomed() then return true end
-	if check_shadows() then return true end
-	if check_use_item() then return true end
 	if check_sub() then return true end
 	if check_food() then return true end
-	if check_ws() then return true end
 	if check_samba() then return true end
+	if check_ws() then return true end
 	if check_cpring_buff() then return true end
 	if check_cleanup() then return true end
 	if check_nuke() then return true end
@@ -1490,6 +1493,10 @@ function get_idle_set(petStatus)
             mote_vars.set_breadcrumbs:append(group)
         end
     end
+
+	if buffactive['Elvorseal'] and sets.buff.Elvorseal then
+		idleSet = set_combine(idleSet, sets.buff.Elvorseal)
+	end
 
 	--Apply time based gear.
     if (state.IdleMode.value == 'Normal' or state.IdleMode.value:contains('Sphere')) and not pet.isvalid then
@@ -1635,6 +1642,10 @@ function get_melee_set()
         meleeSet = user_job_customize_melee_set(meleeSet)
     end
 	
+	if buffactive['Elvorseal'] and sets.buff.Elvorseal then
+		meleeSet = set_combine(meleeSet, sets.buff.Elvorseal)
+	end
+	
     if state.ExtraMeleeMode and state.ExtraMeleeMode.value ~= 'None' then
         meleeSet = set_combine(meleeSet, sets[state.ExtraMeleeMode.value])
     end
@@ -1656,7 +1667,7 @@ function get_melee_set()
 		end
 	end
 	
-	if sets.Reive and buffactive['Reive Mark'] then
+	if buffactive['Reive Mark'] and sets.Reive then
         meleeSet = set_combine(meleeSet, sets.Reive)
     end
 	
