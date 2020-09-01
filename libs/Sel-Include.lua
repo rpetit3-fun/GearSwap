@@ -158,7 +158,7 @@ function init_include()
 	state.EquipStop           = M{['description'] = 'Stop Equipping Gear', 'off', 'precast', 'midcast', 'pet_midcast'}
 	state.CombatWeapon        = M{['description']='Combat Weapon', ['string']=''}
 	state.CombatForm          = M{['description']='Combat Form', ['string']=''}
-	
+
 	NotifyBuffs = S{}
 	
 	if data.jobs.mage_jobs:contains(player.main_job) then
@@ -301,10 +301,10 @@ function init_include()
 	include('Sel-TreasureHunter')
 	
 	-- User based files.
-    optional_include('user-globals.lua')
+	--optional_include('user-globals.lua')
+	optional_include(player.name..'_Crafting.lua')
     optional_include(player.name..'-globals.lua')
     optional_include(player.name..'-items.lua')
-	optional_include(player.name..'_Crafting.lua')
 	include(player.name..'_'..player.main_job..'_gear.lua') -- Required Gear file.
 
 	-- New Display functions, needs to come after globals for user settings.
@@ -1493,7 +1493,7 @@ function get_idle_set(petStatus)
 
 	--Apply time based gear.
     if (state.IdleMode.value == 'Normal' or state.IdleMode.value:contains('Sphere')) and not pet.isvalid then
-	    if player.hpp < 80 then
+	    if player.hpp < 90 then
 			if sets.ExtraRegen then idleSet = set_combine(idleSet, sets.ExtraRegen) end
 		end
 	
@@ -1514,7 +1514,11 @@ function get_idle_set(petStatus)
 	
     if sets.Reive and buffactive['Reive Mark'] then
         idleSet = set_combine(idleSet, sets.Reive)
-    end
+	end
+	
+	if sets.DomainInvasion and buffactive['Elvorseal'] then
+        idleSet = set_combine(idleSet, sets.DomainInvasion)
+	end
 
     if user_customize_idle_set then
         idleSet = user_customize_idle_set(idleSet)
@@ -1578,6 +1582,12 @@ function get_idle_set(petStatus)
     if extra_user_customize_idle_set then
         idleSet = extra_user_customize_idle_set(idleSet)
     end
+
+	if state.CraftMode then
+		if  state.CraftMode.value ~= 'None' then
+			idleSet = set_combine(idleSet, sets.CraftMode[state.CraftMode.value])
+		end
+	end
 
     return idleSet
 end
@@ -1658,7 +1668,11 @@ function get_melee_set()
 	
 	if sets.Reive and buffactive['Reive Mark'] then
         meleeSet = set_combine(meleeSet, sets.Reive)
-    end
+	end
+	
+	if sets.DomainInvasion and buffactive['Elvorseal'] then
+        meleeSet = set_combine(meleeSet, sets.DomainInvasion)
+	end
 	
 	if (buffactive.sleep or buffactive.Lullaby) and sets.buff.Sleep then
         meleeSet = set_combine(meleeSet, sets.buff.Sleep)

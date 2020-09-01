@@ -375,7 +375,17 @@ function handle_weapons(cmdParams)
 	elseif type(cmdParams) == 'table' then
 		weaponSet = cmdParams[1]
 	end
-	if weaponSet == nil then
+
+	is_crafting = false
+	if state.CraftMode then
+		if state.CraftMode.value ~= 'None' then
+			is_crafting = true
+		end
+	end
+
+	if is_crafting then
+		enable('main','sub','range','ammo')
+	elseif weaponSet == nil then
 		if sets.weapons[state.Weapons.value] then
 			equip_weaponset(state.Weapons.value)
 		elseif state.Weapons.value == 'None' then

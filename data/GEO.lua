@@ -76,6 +76,9 @@ function job_setup()
 	state.AutoEntrust = M(false, 'AutoEntrust Mode')
 	state.CombatEntrustOnly = M(true, 'Combat Entrust Only Mode')
 	state.AutoGeoAbilities = M(true, 'Use Geo Abilities Automatically')
+	state.GeoMode = M{['description']='Geo Mode', 'Frailty', 'Malaise', 'Torpor', 'Vex', 'Wilt', 'Fade', 'Slip', 'Languor', 'Slow', 'Paralysis', 'Gravity', 'Poison', 'Fury', 'Acumen', 'Regen', 'Refresh', 'Haste', 'Barrier', 'Fend', 'Precision', 'Voidance', 'Focus', 'Attunement', 'STR', 'DEX', 'VIT', 'AGI', 'INT', 'MND', 'CHR'}
+	state.IndiMode = M{['description']='Indi Mode', 'Fury', 'Acumen', 'Haste', 'Precision', 'Focus', 'Barrier',	'Fend', 'Voidance', 'Attunement', 'Regen', 'Poison', 'Refresh', 'STR', 'DEX', 'VIT', 'AGI', 'INT', 'MND', 'CHR', 'Wilt', 'Frailty', 'Fade', 'Malaise', 'Slip', 'Torpor', 'Vex', 'Languor', 'Slow', 'Paralysis', 'Gravity'}
+	state.EntrustMode = M{['description']='Entrust Mode', 'Haste', 'Acumen', 'Fury', 'Precision', 'Focus', 'Barrier', 'Fend', 'Voidance', 'Attunement', 'Regen', 'Poison', 'Refresh', 'STR', 'DEX', 'VIT', 'AGI', 'INT', 'MND', 'CHR', 'Wilt', 'Frailty', 'Fade', 'Malaise', 'Slip', 'Torpor', 'Vex', 'Languor', 'Slow', 'Paralysis', 'Gravity'}
 
     indi_timer = ''
     indi_duration = 180
@@ -339,7 +342,11 @@ function job_customize_idle_set(idleSet)
         end
     end
 
-    if state.IdleMode.value == 'Normal' or state.IdleMode.value:contains('Sphere') then
+	if state.IdleMode.value == 'Normal' or state.IdleMode.value:contains('Sphere') then
+		if player.mpp < 90 then
+			idleSet = set_combine(idleSet, sets.refresh_main)
+		end
+
 		if player.mpp < 51 then
 			if sets.latent_refresh then
 				idleSet = set_combine(idleSet, sets.latent_refresh)
@@ -357,9 +364,9 @@ function job_customize_idle_set(idleSet)
 				end
 			end
 		end
-   end
+   	end
 
-    return idleSet
+	return idleSet
 end
 
 -- Called by the 'update' self-command.
@@ -530,6 +537,20 @@ function handle_elemental(cmdParams)
 	elseif command == 'bardsong' then
 		windower.chat.input('/ma "'..data.elements.threnody_of[state.ElementalMode.value]..' Threnody" '..target..'')
 
+	elseif command == 'indi' then
+		windower.chat.input('/ma "'..indi_spell_list[state.IndiMode.value].Name..'" <me>')
+	elseif command == 'entrust' then
+		local abil_recasts = windower.ffxi.get_ability_recasts()
+		state.Buff.Entrust = buffactive.Entrust or false
+		if abil_recasts[93] < latency then
+			send_command('@input /ja "Entrust" <me>; wait 1.1; input /ma "'..indi_spell_list[state.EntrustMode.value].Name..'" '..target)
+			tickdelay = os.clock() + 3.5
+		elseif state.Buff.Entrust then
+			windower.chat.input('/ma "'..indi_spell_list[state.EntrustMode.value].Name..'" '..target)
+		end
+	elseif command == 'geo' then
+		-- need to check if geo is a buff
+		windower.chat.input('/ma "'..geo_spell_list[state.GeoMode.value].Name..'" '..target)
     else
         add_to_chat(123,'Unrecognized elemental command.')
     end
@@ -619,7 +640,10 @@ windower.raw_register_event('prerender', function()
     local indi_count = 0
     local geo_count = 0
     local battle_target = windower.ffxi.get_mob_by_target('bt') or false
-    if myluopan and last_geo then
+	if myluopan and last_geo then
+		if pet.hpp then
+			luopan_txtbox = luopan_txtbox..' \\cs(0,255,0)Luopan: '..pet.hpp..' %\\cs(255,255,255)\n'
+		end
         luopan_txtbox = luopan_txtbox..' \\cs(0,255,0)Geo-'..last_geo..':\\cs(255,255,255)\n'
         for i,v in pairs(windower.ffxi.get_mob_array()) do
             local DistanceBetween = ((myluopan.x - v.x)*(myluopan.x-v.x) + (myluopan.y-v.y)*(myluopan.y-v.y)):sqrt()
@@ -742,4 +766,70 @@ buff_spell_lists = {
 		{Name='Regen',		Buff='Regen',		SpellID=108,	Reapply=false},
 		{Name='Phalanx',	Buff='Phalanx',		SpellID=106,	Reapply=false},
 	},
+}
+
+indi_spell_list = {
+	Regen={Name='Indi-Regen', Buff='Regen', SpellID=768},
+	Poison={Name='Indi-Poison', Buff='Poison', SpellID=769},
+	Refresh={Name='Indi-Refresh', Buff='Refresh', SpellID=770},
+	Haste={Name='Indi-Haste', Buff='Haste', SpellID=771},
+	STR={Name='Indi-STR', Buff='STR+', SpellID=772},
+	DEX={Name='Indi-DEX', Buff='DEX+', SpellID=773},
+	VIT={Name='Indi-VIT', Buff='VIT+', SpellID=774},
+	AGI={Name='Indi-AGI', Buff='AGI+', SpellID=775},
+	INT={Name='Indi-INT', Buff='INT+', SpellID=776},
+	MND={Name='Indi-MND', Buff='MND+', SpellID=777},
+	CHR={Name='Indi-CHR', Buff='CHR+', SpellID=778},
+	Fury={Name='Indi-Fury', Buff='ATK+', SpellID=779},
+	Barrier={Name='Indi-Barrier', Buff='DEF+', SpellID=780},
+	Acumen={Name='Indi-Acumen', Buff='MATK+', SpellID=781},
+	Fend={Name='Indi-Fend', Buff='MDEF+', SpellID=782},
+	Precision={Name='Indi-Precision', Buff='ACC+', SpellID=783},
+	Voidance={Name='Indi-Voidance', Buff='EVA+', SpellID=784},
+	Focus={Name='Indi-Focus', Buff='MACC+', SpellID=785},
+	Attunement={Name='Indi-Attunement', Buff='MEVA+', SpellID=786},
+	Wilt={Name='Indi-Wilt', Buff='ATK-', SpellID=787},
+	Frailty={Name='Indi-Frailty', Buff='DEF-', SpellID=788},
+	Fade={Name='Indi-Fade', Buff='MATK-', SpellID=789},
+	Malaise={Name='Indi-Malaise', Buff='MDEF-', SpellID=790},
+	Slip={Name='Indi-Slip', Buff='ACC-', SpellID=791},
+	Torpor={Name='Indi-Torpor', Buff='EVA-', SpellID=792},
+	Vex={Name='Indi-Vex', Buff='MACC-', SpellID=793},
+	Languor={Name='Indi-Languor', Buff='MEVA-', SpellID=794},
+	Slow={Name='Indi-Slow', Buff='Slow', SpellID=795},
+	Paralysis={Name='Indi-Paralysis', Buff='Paralyze', SpellID=796},
+	Gravity={Name='Indi-Gravity', Buff='Gravity', SpellID=797},
+}
+
+geo_spell_list = {
+	Regen={Name='Geo-Regen', Buff='Regen', SpellID=798},
+	Poison={Name='Geo-Poison', Buff='Poison', SpellID=799},
+	Refresh={Name='Geo-Refresh', Buff='Refresh', SpellID=800},
+	Haste={Name='Geo-Haste', Buff='Haste', SpellID=801},
+	STR={Name='Geo-STR', Buff='STR+', SpellID=802},
+	DEX={Name='Geo-DEX', Buff='DEX+', SpellID=803},
+	VIT={Name='Geo-VIT', Buff='VIT+', SpellID=804},
+	AGI={Name='Geo-AGI', Buff='AGI+', SpellID=805},
+	INT={Name='Geo-INT', Buff='INT+', SpellID=806},
+	MND={Name='Geo-MND', Buff='MND+', SpellID=807},
+	CHR={Name='Geo-CHR', Buff='CHR+', SpellID=808},
+	Fury={Name='Geo-Fury', Buff='ATK+', SpellID=809},
+	Barrier={Name='Geo-Barrier', Buff='DEF+', SpellID=810},
+	Acumen={Name='Geo-Acumen', Buff='MATK+', SpellID=811},
+	Fend={Name='Geo-Fend',	Buff='MDEF+', SpellID=812},
+	Precision={Name='Geo-Precision',	Buff='ACC+', SpellID=813},
+	Voidance={Name='Geo-Voidance', Buff='EVA+', SpellID=814},
+	Focus={Name='Geo-Focus', Buff='MACC+', SpellID=815},
+	Attunement={Name='Geo-Attunement', Buff='MEVA+', SpellID=816},
+	Wilt={Name='Geo-Wilt', Buff='ATK-', SpellID=817},
+	Frailty={Name='Geo-Frailty', Buff='DEF-', SpellID=818},
+	Fade={Name='Geo-Fade', Buff='MATK-', SpellID=819},
+	Malaise={Name='Geo-Malaise', Buff='MDEF-', SpellID=820},
+	Slip={Name='Geo-Slip', Buff='ACC-', SpellID=821},
+	Torpor={Name='Geo-Torpor', Buff='EVA-', SpellID=822},
+	Vex={Name='Geo-Vex', Buff='MACC-', SpellID=823},
+	Languor={Name='Geo-Languor', Buff='MEVA-', SpellID=824},
+	Slow={Name='Geo-Slow', Buff='Slow', SpellID=825},
+	Paralysis={Name='Geo-Paralysis', Buff='Paralyze', SpellID=826},
+	Gravity={Name='Geo-Gravity', Buff='Gravity', SpellID=827},
 }

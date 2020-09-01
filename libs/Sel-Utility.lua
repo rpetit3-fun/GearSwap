@@ -1378,6 +1378,18 @@ end
 
 function check_cleanup()
 	if state.AutoCleanupMode.value then
+		local shard_name = {'C. Ygg. Shard ','Z. Ygg. Shard ','A. Ygg. Shard ','P. Ygg. Shard ', 'As. Ygg. Sh. ', 'R. Ygg. Shard '}
+		for sni, snv in ipairs(shard_name) do
+			local shard_count = {'I','II','III','IV','V'}
+			for sci, scv in ipairs(shard_count) do
+				if player.inventory[snv..''..scv] then
+					send_command('wait 3.0;input /item "'..snv..''..scv..'" <me>')
+					tickdelay = os.clock() + 2
+					return true
+				end
+			end
+		end
+
 		if player.inventory['Bead Pouch'] then
 			send_command('input /item "Bead Pouch" <me>')
 			tickdelay = os.clock() + 2.4
@@ -1406,8 +1418,33 @@ function check_cleanup()
 			if player.inventory['Riftborn Boulder'] then send_command('put "Riftborn Boulder" sack all') moveditem = true end
 			if player.inventory['Boulder Case'] then send_command('put "Boulder Case" sack all') moveditem = true end
 			if player.inventory['Boulder Box'] then send_command('put "Boulder Box" sack all') moveditem = true end
+			if player.inventory['Bird Feather'] then moveditem = move_stack("Bird Feather", "sack", 12) end
+			if player.inventory['Apkallu Feather'] then moveditem = move_stack("Apkallu Feather", "sack", 12) end
+			if player.inventory['Tulfaire Feather'] then moveditem = move_stack("Tulfaire Feather", "sack", 12) end
+			if player.inventory['Insect Wing'] then moveditem = move_stack("Insect Wing", "sack", 12) end
+			if player.inventory['Chapuli Wing'] then moveditem = move_stack("Chapuli Wing", "sack", 12) end
+			if player.inventory['Chapuli Horn'] then moveditem = move_stack("Chapuli Horn", "sack", 12) end
+			if player.inventory['Beetle Shell'] then moveditem = move_stack("Beetle Shell", "sack", 12) end
+			if player.inventory['Fire Crystal'] then moveditem = move_stack("Fire Crystal", "sack", 12) end
+			if player.inventory['Fire Cluster'] then moveditem = move_stack("Fire Cluster", "sack", 12) end
+			if player.inventory['Spider Web'] then moveditem = move_stack("Spider Web", "sack", 12) end
+			if player.inventory['Danceshroom'] then moveditem = move_stack("Danceshroom", "sack", 12) end
+			if player.inventory['Woozyshroom'] then moveditem = move_stack("Woozyshroom", "sack", 12) end
+			if player.inventory['Earth Crystal'] then moveditem = move_stack("Earth Crystal", "sack", 12) end
+			if player.inventory['Water Crystal'] then moveditem = move_stack("Water Crystal", "sack", 12) end
+			if player.inventory['Dark Crystal'] then moveditem = move_stack("Dark Crystal", "sack", 12) end
+			if player.inventory['Wind Crystal'] then moveditem = move_stack("Wind Crystal", "sack", 12) end
+			if player.inventory['Wind Cluster'] then moveditem = move_stack("Wind Cluster", "sack", 12) end
+			if player.inventory['Ice Crystal'] then moveditem = move_stack("Ice Crystal", "sack", 12) end
+			if player.inventory['Ice Cluster'] then moveditem = move_stack("Ice Cluster", "sack", 12) end
+			if player.inventory['Light Crystal'] then moveditem = move_stack("Light Crystal", "sack", 12) end
+			if player.inventory['Giant Bird Plume'] then moveditem = move_stack("Giant Bird Plume", "sack", 12) end
+			if player.inventory['Lightning Crystal'] then moveditem = move_stack("Lightning Crystal", "sack", 12) end
+			if player.inventory['Lightning Cluster'] then moveditem = move_stack("Lightning Cluster", "sack", 12) end
+			if player.inventory['Twitherym Wing'] then moveditem = move_stack("Twitherym Wing", "sack", 12) end
+			if player.inventory['Umbril Ooze'] then moveditem = move_stack("Umbril Ooze", "sack", 12) end
 		end
-		
+
 		if not state.Capacity.value then
 			if player.inventory['Mecisto. Mantle'] then send_command('put "Mecisto. Mantle" satchel') moveditem = true end
 			if player.inventory['Endorsement Ring'] then send_command('put "Endorsement Ring" satchel')  moveditem = true end
@@ -1420,23 +1457,20 @@ function check_cleanup()
 		
 		if moveditem then tickdelay = os.clock() + 2.3 return true end
 		
-		local shard_name = {'C. Ygg. Shard ','Z. Ygg. Shard ','A. Ygg. Shard ','P. Ygg. Shard '}
-		
-		for sni, snv in ipairs(shard_name) do
-			local shard_count = {'I','II','III','IV','V'}
-			for sci, scv in ipairs(shard_count) do
-				if player.inventory[snv..''..scv] then
-					send_command('wait 3.0;input /item "'..snv..''..scv..'" <me>')
-					tickdelay = os.clock() + 2
-					return true
-				end
-			end
-		end
-
 		return false
 	else
 		return false
 	end
+end
+
+function move_stack(item_name, storage, stack_size)
+	if player.inventory[''..item_name..''] then
+		if player.inventory[item_name].count > stack_size then
+			send_command('put "'..item_name..'" '..storage..' '..stack_size)
+			return true
+		end
+	end
+	return false
 end
 
 function check_trust()
@@ -1792,7 +1826,7 @@ function check_cpring()
 
 	if player.main_job_level == 99 then
 	
-		if player.job_points[(res.jobs[player.main_job_id].ens):lower()].jp_spent == 2100 and not buffactive["Emporox's Gift"] then
+		if not buffactive["Emporox's Gift"] then
 			if item_available("Emporox's Ring") then
 				local emporox_ring = get_usable_item("Emporox's Ring")
 				if player.equipment.left_ring and player.equipment.left_ring == "Emporox's Ring" and emporox_ring.usable then
@@ -2180,6 +2214,8 @@ function check_ammo()
 	return false
 end
 
+
+
 function count_available_ammo(ammo_name)
 	local ammo_count = 0
 	
@@ -2259,6 +2295,7 @@ function check_ws_acc()
 		return state.WeaponskillMode.value
 	end
 end
+
 
 function is_dual_wielding()
 	if ((player.equipment.main and not (player.equipment.sub == 'empty' or player.equipment.sub:contains('Grip') or player.equipment.sub:contains('Strap') or res.items[item_name_to_id(player.equipment.sub)].shield_size))) then

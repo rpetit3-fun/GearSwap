@@ -199,7 +199,45 @@ function update_job_states()
 		PetWSGear = "PetWSGear",
 		DanceStance = "DanceStance",
 		Stance = "Stance",
+		CraftMode = "Crafting",
+		GeoMode = "Geo Spell Mode",
+		EntrustMode = "Entrust Spell Mode",
+		IndiMode = "Indi Spell Mode"
+
     }
+
+	local geo_buffs = {
+		Regen='Regen',
+		Poison='Poison',
+		Refresh='Refresh',
+		Haste='Haste',
+		STR='STR+',
+		DEX='DEX+',
+		VIT='VIT+',
+		AGI='AGI+',
+		INT='INT+',
+		MND='MND+',
+		CHR='CHR+',
+		Fury='ATK+',
+		Barrier='DEF+',
+		Acumen='MATK+',
+		Fend='MDEF+',
+		Precision='ACC+',
+		Voidance='EVA+',
+		Focus='MACC+',
+		Attunement='MEVA+',
+		Wilt='ATK-',
+		Frailty='DEF-',
+		Fade='MATK-',
+		Malaise='MDEF-',
+		Slip='ACC-',
+		Torpor='EVA-',
+		Vex='MACC-',
+		Languor='MEVA-',
+		Slow='Slow',
+		Paralysis='Paralyze',
+		Gravity='Gravity',
+	}
 
     stateBox:clear()
 	stateBox:append('   ')
@@ -235,11 +273,11 @@ function update_job_states()
 
         -- Append basic formatted boolean state
 
-    end
-		stateBox:append(clr.w)
+	end
+	
+	stateBox:append(clr.w)
     -- Construct and append info for modal states
-    for i,n in ipairs(stateList) do
-
+	for i,n in ipairs(stateList) do
         -- Format total haste and delay reduction as percentages
         if n == 'TotalHaste' or n == 'DelayReduction' then
             info[n] = state[n]..'%'
@@ -366,10 +404,23 @@ function update_job_states()
 		else
 			stateBox:append(string.format("%s%s: ${%s}    ", clr.w, labels[n], n))
 		end
-    end
-	
+	end
+
 	if state.ExtraDefenseMode and state.ExtraDefenseMode.value ~= 'None' and state.DefenseMode.value == 'None' then
 		stateBox:append(string.format("%sExtra Defense: %s%s    ", clr.w, clr.h, state.ExtraDefenseMode.value))
+	end
+
+	if state.CraftMode then
+		if state.CraftMode.value ~= 'None' then
+			stateBox:append(string.format("%sCrafting: %s%s    ", clr.w, clr.h, state.CraftMode.value))
+		end
+	end
+
+	if state.GeoMode then
+		local indi_string = string.format("%s%s (%s) %s", clr.h, state.IndiMode.value, geo_buffs[state.IndiMode.value], clr.n)
+		local geo_string = string.format("%s%s (%s) %s",  clr.h, state.GeoMode.value, geo_buffs[state.GeoMode.value], clr.n)
+		local entrust_string = string.format("%s%s (%s) %s", clr.h, state.EntrustMode.value, geo_buffs[state.EntrustMode.value], clr.n)
+		stateBox:append(string.format("%sGeomancy (I/G/E): %s / %s / %s    ", clr.n, indi_string, geo_string, entrust_string))
 	end
     -- Update and display current info
     stateBox:update(info)

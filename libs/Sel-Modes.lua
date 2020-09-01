@@ -496,5 +496,3 @@ _meta.M.__methods['f_has_value'] = function(m)
         end	
     end	
 end	
-
-
